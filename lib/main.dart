@@ -1,6 +1,16 @@
+import 'dart:convert';
+import 'dart:ffi';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
+import 'package:testffi/platform.dart';
+import '';
+import 'generated_bindings.dart';
 
 void main() {
+  //initializeApi(NativeApi.initializeApiDLData);
   runApp(const MyApp());
 }
 
@@ -61,6 +71,29 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  late NativeLibrary lib;
+  FFIPlatform platform = FFIPlatform();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    lib = NativeLibrary(Platform.isAndroid
+        ? DynamicLibrary.open('libnative_add.so')
+        : DynamicLibrary.process());
+
+    platform.init(ffiCallback);
+    super.initState();
+  }
+
+  Future<ByteData> ffiCallback(ByteData? data) async {
+    print('ffiCallback');
+    if (data != null) {
+      print('res ${utf8.decode(data.buffer.asUint8List())}');
+    }
+
+    return ByteData(0);
+  }
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -101,6 +134,42 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            TextButton(
+              onPressed: () async {
+                _counter = lib.native_add(1, 2);
+                print('native add $_counter');
+                setState(() {});
+              },
+              child: Text('native add'),
+            ),
+            TextButton(
+              onPressed: () async {
+                var res = lib.create_coordinate(100, 200);
+                print('native struct ${res.ref}');
+              },
+              child: Text('native struct'),
+            ),
+            TextButton(
+              onPressed: () async {
+                var res = lib.getText(100);
+                print('native struct ${res}');
+              },
+              child: Text('native class'),
+            ),
+            TextButton(
+              onPressed: () async {
+                platform.setJniRef();
+                print('setJniRef');
+              },
+              child: Text('setJniRef'),
+            ),
+            TextButton(
+              onPressed: () async {
+                platform.emitMsg(_counter);
+                print('emitMsg');
+              },
+              child: Text('emitMsg'),
             ),
           ],
         ),

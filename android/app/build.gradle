@@ -52,6 +52,14 @@ android {
             signingConfig signingConfigs.debug
         }
     }
+
+    externalNativeBuild {
+        cmake {
+            path "../CMakeLists.txt" //自动生成的flutter的android包在app下面。注意相对关系
+        }
+    }
+
+    ndkVersion '22.0.7026061'
 }
 
 flutter {
