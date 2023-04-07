@@ -42,6 +42,11 @@ public class MainActivity extends FlutterActivity {
                         int p = call.argument("value");
                         Jni.emitMsg(p);
                         break;
+                    case "nativeAddMethodChanel":
+                        int x = call.argument("x");
+                        int y = call.argument("y");
+                        result.success(Jni.nativeAdd(x,y));
+                        break;
                 }
             }
         });

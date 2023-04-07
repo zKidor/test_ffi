@@ -1,16 +1,18 @@
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:testffi/platform.dart';
 import '';
 import 'generated_bindings.dart';
 
 void main() {
-  //initializeApi(NativeApi.initializeApiDLData);
+  //FFIPlatform.ffi_Dart_InitializeApiDL();
   runApp(const MyApp());
 }
 
@@ -71,15 +73,14 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  late NativeLibrary lib;
   FFIPlatform platform = FFIPlatform();
 
   @override
   void initState() {
     // TODO: implement initState
-    lib = NativeLibrary(Platform.isAndroid
-        ? DynamicLibrary.open('libnative_add.so')
-        : DynamicLibrary.process());
+    // lib = NativeLibrary(Platform.isAndroid
+    //     ? DynamicLibrary.open('libnative_add.so')
+    //     : DynamicLibrary.process());
 
     platform.init(ffiCallback);
     super.initState();
@@ -111,67 +112,105 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            TextButton(
-              onPressed: () async {
-                _counter = lib.native_add(1, 2);
-                print('native add $_counter');
-                setState(() {});
-              },
-              child: Text('native add'),
-            ),
-            TextButton(
-              onPressed: () async {
-                var res = lib.create_coordinate(100, 200);
-                print('native struct ${res.ref}');
-              },
-              child: Text('native struct'),
-            ),
-            TextButton(
-              onPressed: () async {
-                var res = lib.getText(100);
-                print('native struct ${res}');
-              },
-              child: Text('native class'),
-            ),
-            TextButton(
-              onPressed: () async {
-                platform.setJniRef();
-                print('setJniRef');
-              },
-              child: Text('setJniRef'),
-            ),
-            TextButton(
-              onPressed: () async {
-                platform.emitMsg(_counter);
-                print('emitMsg');
-              },
-              child: Text('emitMsg'),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Text(
+                'You have pushed the button this many times:',
+              ),
+              Text(
+                '$_counter',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const Text(
+                'FFI:',
+              ),
+              TextButton(
+                onPressed: () async {
+                  var start = DateTime.now().millisecondsSinceEpoch;
+                  _counter = FFIPlatform.lib.native_add(1, 2);
+                  print(DateTime.now().millisecondsSinceEpoch - start);
+                  print('native add $_counter');
+                  setState(() {});
+                },
+                child: Text('native add'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  var res = FFIPlatform.lib.create_coordinate(100, 200);
+                  print('native struct ${res.ref}');
+                },
+                child: Text('native struct'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  var res = FFIPlatform.lib.getText(100);
+                  print('native struct ${res}');
+                },
+                child: Text('native class'),
+              ),
+              const Text(
+                'Method channel:',
+              ),
+              TextButton(
+                onPressed: () async {
+                  platform.setJniRef();
+                  print('setJniRef');
+                },
+                child: Text('setJniRef'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  platform.emitMsg(_counter);
+                  print('emitMsg');
+                },
+                child: Text('emitMsg'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  var start = DateTime.now().millisecondsSinceEpoch;
+                  int res = await platform.nativeAddMethodChanel(100, 201);
+                  print(DateTime.now().millisecondsSinceEpoch - start);
+                  print('native add method channel res $res');
+                },
+                child: Text('native add method channel'),
+              ),
+              const Text(
+                'FFI isolate:',
+              ),
+              TextButton(
+                onPressed: () async {
+                  var start = DateTime.now().millisecondsSinceEpoch;
+                  var res =
+                      await compute(FFIPlatform.nativeAdd, Point(100, 201));
+                  print(DateTime.now().millisecondsSinceEpoch - start);
+                  print('compute res $res');
+                },
+                child: Text('compute'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  var start = DateTime.now().millisecondsSinceEpoch;
+                  final lb = await loadBalancer;
+                  int res = await lb.run<int, Point<int>>(
+                      FFIPlatform.nativeAdd, Point(101, 201));
+                  print(DateTime.now().millisecondsSinceEpoch - start);
+                  print('loader balance res $res');
+                },
+                child: Text('loader balance'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  var start = DateTime.now().millisecondsSinceEpoch;
+                  int res = await FFIPlatform.nativeAddCallback(11, 22, Pointer.fromFunction<Void Function(Int)>(call));
+                  print(DateTime.now().millisecondsSinceEpoch - start);
+                  print('c callback dart res $res');
+                },
+                child: Text('c callback dart'),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -180,5 +219,9 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  static void call(int res){
+    print("dart callback $res ");
   }
 }

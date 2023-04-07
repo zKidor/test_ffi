@@ -69,6 +69,38 @@ class NativeLibrary {
   late final _getTextPtr =
       _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>('getText');
   late final _getText = _getTextPtr.asFunction<int Function(int)>();
+
+  int ffi_Dart_InitializeApiDL(
+    ffi.Pointer<ffi.Void> data,
+  ) {
+    return _ffi_Dart_InitializeApiDL(
+      data,
+    );
+  }
+
+  late final _ffi_Dart_InitializeApiDLPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Void>)>>(
+          'ffi_Dart_InitializeApiDL');
+  late final _ffi_Dart_InitializeApiDL = _ffi_Dart_InitializeApiDLPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Void>)>();
+
+  int native_add_callback(
+    int x,
+    int y,
+    callback call,
+  ) {
+    return _native_add_callback(
+      x,
+      y,
+      call,
+    );
+  }
+
+  late final _native_add_callbackPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Int, callback)>>(
+          'native_add_callback');
+  late final _native_add_callback =
+      _native_add_callbackPtr.asFunction<int Function(int, int, callback)>();
 }
 
 class Coordinate extends ffi.Struct {
@@ -78,3 +110,5 @@ class Coordinate extends ffi.Struct {
   @ffi.Double()
   external double longitude;
 }
+
+typedef callback = ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>;

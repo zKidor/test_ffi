@@ -3,6 +3,7 @@
 //
 #include <jni.h>
 #include <pthread.h>
+#include "native_add.h"
 
 JavaVM *g_jvm = NULL;
 jobject g_obj;
@@ -36,4 +37,11 @@ Java_com_example_testffi_Jni_emitMsg(JNIEnv *env, jclass clazz, jint p) {
 
     jmethodID method = env->GetMethodID(cls, "emitMsgJava", "(I)I");
     env->CallIntMethod(g_obj, method, p);
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_example_testffi_Jni_nativeAdd(JNIEnv *env, jclass clazz, jint x, jint y) {
+    // TODO: implement nativeAdd()
+    return native_add(x,y);
 }
